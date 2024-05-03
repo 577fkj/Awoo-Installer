@@ -163,21 +163,47 @@ namespace inst::ui {
                     break;
 
                 case 1:
-                    client = drive::new_drive(drive::dt_alidrive);
+                    client = drive::new_drive(drive::dt_webdav);
                     try {
-                        if (client->qrLogin([&](const std::string& content, bool scaned) {
-                            mainApp->CallForRender();
-                            drive::renderQr(content, this->qrcodeImage, 440);
-                            this->infoImage->SetVisible(false);
-                            this->qrcodeImage->SetVisible(true);
-                            this->pageInfoText->SetText(scaned ? "inst.net.qr_scaned"_lang : "inst.net.qr_new"_lang);
-                        }) == drive::ds_ok) {
-                            this->qrcodeImage->SetVisible(false);
-                            this->infoImage->SetVisible(true);
-                            this->ourUrls = client->list("root");
-                            this->lastFileId.push_back("root");
+                        url = inst::util::softwareKeyboard("inst.net.url.hint"_lang, inst::config::lastNetUrl, 500);
+                        if (url.empty()) continue;
+                        std::string username = inst::util::softwareKeyboard("username", "", 500);
+                        if (username.empty()) continue;
+                        std::string password = inst::util::softwareKeyboard("password", "", 500);
+                        if (password.empty()) continue;
+                        client->set_auth(username, password);
+
+                        this->ourUrls = client->list(url);
+                        switch (this->ourUrls.size())
+                        {
+                        case 0:
+                            inst::ui::mainApp->CreateShowDialog("inst.net.url.invalid"_lang, "", {"common.ok"_lang}, false);
                             break;
-                        };
+                        
+                        case 1:
+                            this->selectedUrls = { this->ourUrls[0].id };
+                            this->startInstall(true);
+                            return;
+                        
+                        default:
+                            this->lastFileId.push_back(url);
+                            break;
+                        }
+
+
+                        // if (client->qrLogin([&](const std::string& content, bool scaned) {
+                        //     mainApp->CallForRender();
+                        //     drive::renderQr(content, this->qrcodeImage, 440);
+                        //     this->infoImage->SetVisible(false);
+                        //     this->qrcodeImage->SetVisible(true);
+                        //     this->pageInfoText->SetText(scaned ? "inst.net.qr_scaned"_lang : "inst.net.qr_new"_lang);
+                        // }) == drive::ds_ok) {
+                        //     this->qrcodeImage->SetVisible(false);
+                        //     this->infoImage->SetVisible(true);
+                        //     this->ourUrls = client->list("root");
+                        //     this->lastFileId.push_back("root");
+                        //     break;
+                        // };
                         
                     } catch (json::parse_error& ex) {
                         inst::ui::mainApp->CreateShowDialog("json::parse_error", ex.what(), {"common.ok"_lang}, false);

@@ -22,6 +22,7 @@ namespace inst::drive {
         dt_httpdir,  // Http index
         dt_gdrive,   // Google Drive
         dt_alidrive, // AliyunDrive
+        dt_webdav,   // WebDAV
     };
 
     class drive {
@@ -34,6 +35,7 @@ namespace inst::drive {
         virtual drive_type getType() = 0;
         virtual drive_status qrLogin(onQrcode printQr) { return ds_ok; }
         virtual entries list(const std::string& file_id) = 0;
+        virtual void set_auth(const std::string& username, const std::string& password) {}
     };
 
     drive::ref new_drive(drive_type type);

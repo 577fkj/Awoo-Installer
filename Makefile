@@ -69,6 +69,7 @@ LIBS	+=	-lusbhsfs -llwext4 -lntfs-3g
 LIBS	+=	-lSDL2_mixer -lopusfile -lopus -lmodplug -lmpg123 -lvorbisidec -logg # Audio
 LIBS	+=	-lpu -lSDL2_gfx -lSDL2_image -lwebp -lpng -ljpeg `sdl2-config --libs` `freetype-config --libs` # Graphics
 LIBS	+=	-lmbedtls -lmbedcrypto -lminizip -lzstd # Memes
+LIBS    +=  -ltinyxml2 # Tinyxml2
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

@@ -22,6 +22,8 @@ namespace inst::curl {
         std::string post(const std::string& url, const std::string& data, const std::vector<std::string>& headers);
         std::string formEncode(const std::map<std::string, std::string>& form);
 
+        void set_user_name_and_password(const std::string& username, const std::string& password);
+        std::string send_custom_method(const std::string& url, const std::string& method);
     private:
         curl_ctx* ctx;
     };

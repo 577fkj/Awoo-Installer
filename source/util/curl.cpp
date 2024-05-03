@@ -124,6 +124,20 @@ namespace inst::curl {
         return ss.str();
     }
 
+    void client::set_user_name_and_password(const std::string& username, const std::string& password) {
+        curl_easy_setopt(ctx->easy, CURLOPT_USERNAME, username.c_str());
+        curl_easy_setopt(ctx->easy, CURLOPT_PASSWORD, password.c_str());
+    }
+
+    std::string client::send_custom_method(const std::string& url, const std::string& method) {
+        std::ostringstream body;
+        curl_easy_setopt(ctx->easy, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(ctx->easy, CURLOPT_USERAGENT, this->userAgent());
+        curl_easy_setopt(ctx->easy, CURLOPT_CUSTOMREQUEST, method.c_str());
+        ctx->perform(&body);
+        return body.str();
+    }
+
     int progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
         if (ultotal) {
             int uploadProgress = (int)(((double)ulnow / (double)ultotal) * 100.0);
