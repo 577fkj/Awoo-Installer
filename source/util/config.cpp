@@ -3,9 +3,12 @@
 #include "util/config.hpp"
 #include "util/json.hpp"
 
-namespace inst::config {
+namespace inst::config
+{
     std::string sigPatchesUrl;
     std::string lastNetUrl;
+    std::string lastUserName;
+    std::string lastPassword;
     std::string aliDriveToken;
     std::vector<std::string> updateInfo;
     int languageSetting;
@@ -17,7 +20,8 @@ namespace inst::config {
     bool usbAck;
     bool validateNCAs;
 
-    void setConfig() {
+    void setConfig()
+    {
         nlohmann::json j = {
             {"autoUpdate", autoUpdate},
             {"deletePrompt", deletePrompt},
@@ -29,14 +33,17 @@ namespace inst::config {
             {"sigPatchesUrl", sigPatchesUrl},
             {"usbAck", usbAck},
             {"validateNCAs", validateNCAs},
-            {"lastNetUrl", lastNetUrl}
-        };
+            {"lastNetUrl", lastNetUrl},
+            {"lastUserName", lastUserName},
+            {"lastPassword", lastPassword}};
         std::ofstream file(inst::config::configPath);
         file << std::setw(4) << j << std::endl;
     }
 
-    void parseConfig() {
-        try {
+    void parseConfig()
+    {
+        try
+        {
             std::ifstream file(inst::config::configPath);
             nlohmann::json j;
             file >> j;
@@ -51,8 +58,11 @@ namespace inst::config {
             usbAck = j["usbAck"].get<bool>();
             validateNCAs = j["validateNCAs"].get<bool>();
             lastNetUrl = j["lastNetUrl"].get<std::string>();
+            lastUserName = j["lastUserName"].get<std::string>();
+            lastPassword = j["lastPassword"].get<std::string>();
         }
-        catch (...) {
+        catch (...)
+        {
             // If loading values from the config fails, we just load the defaults and overwrite the old config
             sigPatchesUrl = "https://sigmapatches.coomer.party/sigpatches.zip";
             languageSetting = 99;
@@ -64,6 +74,8 @@ namespace inst::config {
             usbAck = false;
             validateNCAs = true;
             lastNetUrl = "https://";
+            lastUserName = "";
+            lastPassword = "";
             setConfig();
         }
     }

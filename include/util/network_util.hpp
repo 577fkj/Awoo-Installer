@@ -36,7 +36,8 @@ SOFTWARE.
 #include <vector>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
 #ifdef __cplusplus
@@ -47,21 +48,23 @@ namespace tin::network
 {
     class HTTPDownload
     {
-        private:
-            std::string m_url;
-            bool m_rangesSupported = false;
+    private:
+        std::string m_url;
+        std::string m_userName;
+        std::string m_password;
+        bool m_rangesSupported = false;
 
-            static size_t ParseHTMLData(char* bytes, size_t size, size_t numItems, void* userData);
+        static size_t ParseHTMLData(char *bytes, size_t size, size_t numItems, void *userData);
 
-        public:
-            HTTPDownload(std::string url);
-    
-            void BufferDataRange(void* buffer, size_t offset, size_t size, std::function<void (size_t sizeRead)> progressFunc);
-            int StreamDataRange(size_t offset, size_t size, std::function<size_t (u8* bytes, size_t size)> streamFunc);
+    public:
+        HTTPDownload(std::string url, std::string user_name, std::string password);
+
+        void BufferDataRange(void *buffer, size_t offset, size_t size, std::function<void(size_t sizeRead)> progressFunc);
+        int StreamDataRange(size_t offset, size_t size, std::function<size_t(u8 *bytes, size_t size)> streamFunc);
     };
 
     void NSULDrop(std::string url);
 
-    size_t WaitReceiveNetworkData(int sockfd, void* buf, size_t len);
-    size_t WaitSendNetworkData(int sockfd, void* buf, size_t len);
+    size_t WaitReceiveNetworkData(int sockfd, void *buf, size_t len);
+    size_t WaitSendNetworkData(int sockfd, void *buf, size_t len);
 }

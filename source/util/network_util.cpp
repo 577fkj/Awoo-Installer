@@ -30,11 +30,13 @@ SOFTWARE.
 #include "util/error.hpp"
 #include "ui/MainApplication.hpp"
 
-namespace inst::ui {
+namespace inst::ui
+{
     extern MainApplication *mainApp;
 }
 
-namespace inst::curl {
+namespace inst::curl
+{
     extern const std::string default_user_agent;
 }
 
@@ -42,10 +44,9 @@ namespace tin::network
 {
     // HTTPDownload
 
-    HTTPDownload::HTTPDownload(std::string url) :
-        m_url(url)
+    HTTPDownload::HTTPDownload(std::string url, std::string user_name, std::string password) : m_url(url)
     {
-        CURL* curl = curl_easy_init();
+        CURL *curl = curl_easy_init();
         CURLcode rc = (CURLcode)0;
 
         if (!curl)
@@ -57,6 +58,15 @@ namespace tin::network
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
         curl_easy_setopt(curl, CURLOPT_USERAGENT, inst::curl::default_user_agent.c_str());
         curl_easy_setopt(curl, CURLOPT_RANGE, "0-0");
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+        if (!user_name.empty() && !password.empty())
+        {
+            this->m_userName = user_name;
+            this->m_password = password;
+            curl_easy_setopt(curl, CURLOPT_USERNAME, user_name.c_str());
+            curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+        }
 
         rc = curl_easy_perform(curl);
         if (rc != CURLE_OK)
@@ -68,25 +78,27 @@ namespace tin::network
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
         curl_easy_cleanup(curl);
 
+        LOG_DEBUG("httpCode == %ld\n", httpCode);
+
         m_rangesSupported = httpCode == 206;
     }
 
-    size_t HTTPDownload::ParseHTMLData(char* bytes, size_t size, size_t numItems, void* userData)
+    size_t HTTPDownload::ParseHTMLData(char *bytes, size_t size, size_t numItems, void *userData)
     {
-        auto streamFunc = *reinterpret_cast<std::function<size_t (u8* bytes, size_t size)>*>(userData);
+        auto streamFunc = *reinterpret_cast<std::function<size_t(u8 * bytes, size_t size)> *>(userData);
         size_t numBytes = size * numItems;
 
         if (streamFunc != nullptr)
-            return streamFunc((u8*)bytes, numBytes);
+            return streamFunc((u8 *)bytes, numBytes);
 
         return numBytes;
     }
 
-    void HTTPDownload::BufferDataRange(void* buffer, size_t offset, size_t size, std::function<void (size_t sizeRead)> progressFunc)
+    void HTTPDownload::BufferDataRange(void *buffer, size_t offset, size_t size, std::function<void(size_t sizeRead)> progressFunc)
     {
         size_t sizeRead = 0;
 
-        auto streamFunc = [&](u8* streamBuf, size_t streamBufSize) -> size_t
+        auto streamFunc = [&](u8 *streamBuf, size_t streamBufSize) -> size_t
         {
             if (sizeRead + streamBufSize > size)
             {
@@ -97,7 +109,7 @@ namespace tin::network
             if (progressFunc != nullptr)
                 progressFunc(sizeRead);
 
-            memcpy(reinterpret_cast<u8*>(buffer) + sizeRead, streamBuf, streamBufSize);
+            memcpy(reinterpret_cast<u8 *>(buffer) + sizeRead, streamBuf, streamBufSize);
             sizeRead += streamBufSize;
             return streamBufSize;
         };
@@ -105,7 +117,7 @@ namespace tin::network
         this->StreamDataRange(offset, size, streamFunc);
     }
 
-    int HTTPDownload::StreamDataRange(size_t offset, size_t size, std::function<size_t (u8* bytes, size_t size)> streamFunc)
+    int HTTPDownload::StreamDataRange(size_t offset, size_t size, std::function<size_t(u8 *bytes, size_t size)> streamFunc)
     {
         if (!m_rangesSupported)
         {
@@ -114,7 +126,7 @@ namespace tin::network
 
         auto writeDataFunc = streamFunc;
 
-        CURL* curl = curl_easy_init();
+        CURL *curl = curl_easy_init();
         CURLcode rc = (CURLcode)0;
 
         if (!curl)
@@ -132,6 +144,13 @@ namespace tin::network
         curl_easy_setopt(curl, CURLOPT_RANGE, range.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &writeDataFunc);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &tin::network::HTTPDownload::ParseHTMLData);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+
+        if (!this->m_userName.empty() && !this->m_password.empty())
+        {
+            curl_easy_setopt(curl, CURLOPT_USERNAME, this->m_userName.c_str());
+            curl_easy_setopt(curl, CURLOPT_PASSWORD, this->m_password.c_str());
+        }
 
         rc = curl_easy_perform(curl);
 
@@ -139,18 +158,21 @@ namespace tin::network
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
         curl_easy_cleanup(curl);
 
-        if (httpCode != 206 || rc != CURLE_OK) return 1;
+        LOG_DEBUG("StreamDataRange httpCode == %ld\n", httpCode)
+
+        if (httpCode != 206 || rc != CURLE_OK)
+            return 1;
         return 0;
     }
 
     // End HTTPDownload
 
-    size_t WaitReceiveNetworkData(int sockfd, void* buf, size_t len)
+    size_t WaitReceiveNetworkData(int sockfd, void *buf, size_t len)
     {
         int ret = 0;
         size_t read = 0;
 
-        while ((((ret = recv(sockfd, (u8*)buf + read, len - read, 0)) > 0 && (read += ret) < len) || errno == EAGAIN)) 
+        while ((((ret = recv(sockfd, (u8 *)buf + read, len - read, 0)) > 0 && (read += ret) < len) || errno == EAGAIN))
         {
             errno = 0;
         }
@@ -158,38 +180,40 @@ namespace tin::network
         return read;
     }
 
-    size_t WaitSendNetworkData(int sockfd, void* buf, size_t len)
+    size_t WaitSendNetworkData(int sockfd, void *buf, size_t len)
     {
         int ret = 0;
         size_t written = 0;
 
         while (written < len)
-        {            
+        {
             inst::ui::mainApp->UpdateButtons();
             u64 kDown = inst::ui::mainApp->GetButtonsDown();
-            if (kDown & HidNpadButton_B)  // Break if user clicks 'B'
+            if (kDown & HidNpadButton_B) // Break if user clicks 'B'
                 break;
 
             errno = 0;
-            ret = send(sockfd, (u8*)buf + written, len - written, 0);
-            
-            if (ret < 0){ // If error
-                if (errno == EWOULDBLOCK || errno == EAGAIN){ // Is it because other side is busy?
+            ret = send(sockfd, (u8 *)buf + written, len - written, 0);
+
+            if (ret < 0)
+            { // If error
+                if (errno == EWOULDBLOCK || errno == EAGAIN)
+                { // Is it because other side is busy?
                     sleep(5);
                     continue;
                 }
                 break; // No? Die.
             }
-            
+
             written += ret;
         }
-    
+
         return written;
     }
 
     void NSULDrop(std::string url)
     {
-        CURL* curl = curl_easy_init();
+        CURL *curl = curl_easy_init();
 
         if (!curl)
         {
@@ -200,7 +224,7 @@ namespace tin::network
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DROP");
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "tinfoil");
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 50); 
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT_MS, 50);
 
         curl_easy_perform(curl); // ignore returning value
 

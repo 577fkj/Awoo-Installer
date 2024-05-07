@@ -4,7 +4,8 @@
 #include <vector>
 #include <map>
 
-namespace inst::curl {
+namespace inst::curl
+{
     extern const std::string default_user_agent;
 
     bool downloadFile(const std::string ourUrl, const char *pagefilename, long timeout = 5000, bool writeProgress = false);
@@ -12,20 +13,22 @@ namespace inst::curl {
 
     struct curl_ctx;
 
-    class client {
+    class client
+    {
     public:
         client();
         virtual ~client();
-        virtual const char* userAgent() { return default_user_agent.c_str(); }
+        virtual const char *userAgent() { return default_user_agent.c_str(); }
 
-        std::string get(const std::string& url, const std::vector<std::string>& headers);
-        std::string post(const std::string& url, const std::string& data, const std::vector<std::string>& headers);
-        std::string formEncode(const std::map<std::string, std::string>& form);
+        std::string get(const std::string &url, const std::vector<std::string> &headers);
+        std::string post(const std::string &url, const std::string &data, const std::vector<std::string> &headers);
+        std::string formEncode(const std::map<std::string, std::string> &form);
 
-        void set_user_name_and_password(const std::string& username, const std::string& password);
-        std::string send_custom_method(const std::string& url, const std::string& method);
+        void setUsernameAndPassword(const std::string &username, const std::string &password);
+        std::string sendCustomMethod(const std::string &url, const std::string &method, const std::vector<std::string> &headers);
+
     private:
-        curl_ctx* ctx;
+        curl_ctx *ctx;
     };
 
 }

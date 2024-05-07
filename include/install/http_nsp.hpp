@@ -32,7 +32,7 @@ namespace tin::install::nsp
         public:
             tin::network::HTTPDownload m_download;
 
-            HTTPNSP(std::string url);
+            HTTPNSP(std::string url, std::string user_name, std::string password);
 
             virtual void StreamToPlaceholder(std::shared_ptr<nx::ncm::ContentStorage>& contentStorage, NcmContentId placeholderId) override;
             virtual void BufferData(void* buf, off_t offset, size_t size) override;

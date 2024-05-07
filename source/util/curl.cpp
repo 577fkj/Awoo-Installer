@@ -7,60 +7,73 @@
 #include "util/error.hpp"
 #include "ui/instPage.hpp"
 
-namespace inst::curl {
+namespace inst::curl
+{
 
     const std::string default_user_agent = "Awoo-Installer/" + inst::config::appVersion;
 
-    struct curl_global {
-        curl_global() {
+    struct curl_global
+    {
+        curl_global()
+        {
             ASSERT_OK(curl_global_init(CURL_GLOBAL_ALL), "Curl failed to initialized");
         }
 
-        ~curl_global() {
+        ~curl_global()
+        {
             curl_global_cleanup();
         }
     };
 
-    struct curl_ctx {
-        CURL* easy;
-        struct curl_slist* headers;
+    struct curl_ctx
+    {
+        CURL *easy;
+        struct curl_slist *headers;
         long timeout = -1;
         int status_code = 0;
 
-        curl_ctx(): headers(nullptr) {
+        curl_ctx() : headers(nullptr)
+        {
             static curl_global global;
             easy = curl_easy_init();
         }
 
-        ~curl_ctx() {
+        ~curl_ctx()
+        {
             if (headers != nullptr)
                 curl_slist_free_all(headers);
             if (easy != nullptr)
                 curl_easy_cleanup(easy);
         }
 
-        operator CURL*() const {
+        operator CURL *() const
+        {
             return this->easy;
         }
 
-        void set_headers(const std::vector<std::string>& hs) {
-            if (this->headers != nullptr) {
+        void set_headers(const std::vector<std::string> &hs)
+        {
+            if (this->headers != nullptr)
+            {
                 curl_slist_free_all(this->headers);
                 this->headers = nullptr;
             }
-            for (auto& h : hs) {
+            for (auto &h : hs)
+            {
                 this->headers = curl_slist_append(this->headers, h.c_str());
             }
         }
 
-        static size_t easy_write_cb(char* ptr, size_t size, size_t nmemb, void* userdata) {
-            std::ostream* ctx = reinterpret_cast<std::ostream*>(userdata);
+        static size_t easy_write_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
+        {
+            std::ostream *ctx = reinterpret_cast<std::ostream *>(userdata);
             size_t count = size * nmemb;
             ctx->write(ptr, count);
             return count;
         }
 
-        CURLcode perform(std::ostream* body) {
+        CURLcode perform(std::ostream *body)
+        {
             curl_easy_setopt(this->easy, CURLOPT_FOLLOWLOCATION, 1L);
             // enable all supported built-in compressions
             curl_easy_setopt(this->easy, CURLOPT_ACCEPT_ENCODING, "");
@@ -73,12 +86,14 @@ namespace inst::curl {
             curl_easy_setopt(this->easy, CURLOPT_WRITEDATA, body);
             curl_easy_setopt(this->easy, CURLOPT_COOKIEJAR, "");
 
-            if (this->headers != nullptr) {
+            if (this->headers != nullptr)
+            {
                 curl_easy_setopt(this->easy, CURLOPT_HTTPHEADER, this->headers);
             }
 
             CURLcode result = curl_easy_perform(easy);
-            if (result != CURLE_OK) {
+            if (result != CURLE_OK)
+            {
                 body->clear();
                 LOG_DEBUG(curl_easy_strerror(result));
             }
@@ -91,7 +106,8 @@ namespace inst::curl {
 
     client::~client() { delete this->ctx; }
 
-    std::string client::get(const std::string& url, const std::vector<std::string>& headers) {
+    std::string client::get(const std::string &url, const std::vector<std::string> &headers)
+    {
         std::ostringstream body;
         ctx->set_headers(headers);
         curl_easy_setopt(ctx->easy, CURLOPT_URL, url.c_str());
@@ -101,7 +117,8 @@ namespace inst::curl {
         return body.str();
     }
 
-    std::string client::post(const std::string& url, const std::string& data, const std::vector<std::string>& headers) {
+    std::string client::post(const std::string &url, const std::string &data, const std::vector<std::string> &headers)
+    {
         std::ostringstream body;
         ctx->set_headers(headers);
         curl_easy_setopt(ctx->easy, CURLOPT_URL, url.c_str());
@@ -113,10 +130,12 @@ namespace inst::curl {
         return body.str();
     }
 
-    std::string client::formEncode(const std::map<std::string, std::string>& form) {
+    std::string client::formEncode(const std::map<std::string, std::string> &form)
+    {
         std::ostringstream ss;
-        char* escaped;
-        for (auto it : form) {
+        char *escaped;
+        for (auto it : form)
+        {
             escaped = curl_easy_escape(ctx->easy, it.second.c_str(), it.second.size());
             ss << it.first << '=' << escaped << '&';
             curl_free(escaped);
@@ -124,13 +143,16 @@ namespace inst::curl {
         return ss.str();
     }
 
-    void client::set_user_name_and_password(const std::string& username, const std::string& password) {
+    void client::setUsernameAndPassword(const std::string &username, const std::string &password)
+    {
         curl_easy_setopt(ctx->easy, CURLOPT_USERNAME, username.c_str());
         curl_easy_setopt(ctx->easy, CURLOPT_PASSWORD, password.c_str());
     }
 
-    std::string client::send_custom_method(const std::string& url, const std::string& method) {
+    std::string client::sendCustomMethod(const std::string &url, const std::string &method, const std::vector<std::string> &headers)
+    {
         std::ostringstream body;
+        ctx->set_headers(headers);
         curl_easy_setopt(ctx->easy, CURLOPT_URL, url.c_str());
         curl_easy_setopt(ctx->easy, CURLOPT_USERAGENT, this->userAgent());
         curl_easy_setopt(ctx->easy, CURLOPT_CUSTOMREQUEST, method.c_str());
@@ -138,18 +160,23 @@ namespace inst::curl {
         return body.str();
     }
 
-    int progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
-        if (ultotal) {
+    int progress_callback(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+    {
+        if (ultotal)
+        {
             int uploadProgress = (int)(((double)ulnow / (double)ultotal) * 100.0);
             inst::ui::instPage::setInstBarPerc(uploadProgress);
-        } else if (dltotal) {
+        }
+        else if (dltotal)
+        {
             int downloadProgress = (int)(((double)dlnow / (double)dltotal) * 100.0);
             inst::ui::instPage::setInstBarPerc(downloadProgress);
         }
         return 0;
     }
 
-    bool downloadFile(const std::string ourUrl, const char *pagefilename, long timeout, bool writeProgress) {
+    bool downloadFile(const std::string ourUrl, const char *pagefilename, long timeout, bool writeProgress)
+    {
         curl_ctx curl_handle;
         std::ofstream pagefile(pagefilename);
 
@@ -157,21 +184,23 @@ namespace inst::curl {
         curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, default_user_agent.c_str());
         if (writeProgress)
             curl_easy_setopt(curl_handle, CURLOPT_XFERINFOFUNCTION, progress_callback);
-    
-        if (curl_handle.perform(&pagefile) == CURLE_OK) 
+
+        if (curl_handle.perform(&pagefile) == CURLE_OK)
             return true;
-        
-        LOG_DEBUG(curl_easy_strerror(result));
+
+        // LOG_DEBUG(curl_easy_strerror(result));
         return false;
     }
 
-    std::string getRange(const std::string ourUrl, int firstRange, int secondRange, long timeout) {
+    std::string getRange(const std::string ourUrl, int firstRange, int secondRange, long timeout)
+    {
         curl_ctx curl_handle;
         std::ostringstream stream;
         curl_easy_setopt(curl_handle, CURLOPT_URL, ourUrl.c_str());
         curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, default_user_agent.c_str());
 
-        if (firstRange && secondRange) {
+        if (firstRange && secondRange)
+        {
             std::string ourRange = std::to_string(firstRange) + "-" + std::to_string(secondRange);
             curl_easy_setopt(curl_handle, CURLOPT_RANGE, ourRange.c_str());
         }

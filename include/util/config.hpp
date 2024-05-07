@@ -5,13 +5,16 @@
 #define STR_IMPL(x) #x
 #define STR(x) STR_IMPL(x)
 
-namespace inst::config {
+namespace inst::config
+{
     static const std::string appDir = "sdmc:/switch/Awoo-Installer";
     static const std::string configPath = appDir + "/config.json";
     static const std::string appVersion = STR(APP_VERSION);
 
     extern std::string sigPatchesUrl;
     extern std::string lastNetUrl;
+    extern std::string lastUserName;
+    extern std::string lastPassword;
     extern std::string aliDriveToken;
     extern std::vector<std::string> updateInfo;
     extern int languageSetting;

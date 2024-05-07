@@ -33,8 +33,8 @@ namespace tin::install::xci
 {
     bool stopThreadsHttpXci;
 
-    HTTPXCI::HTTPXCI(std::string url) :
-        m_download(url)
+    HTTPXCI::HTTPXCI(std::string url, std::string user_name, std::string password) :
+        m_download(url, user_name, password)
     {
 
     }
