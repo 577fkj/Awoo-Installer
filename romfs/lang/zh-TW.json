@@ -1,5 +1,5 @@
 {
-    "main":{
+    "main": {
         "menu": {
             "sd": "通過SD卡安裝",
             "net": "通過網路安裝",
@@ -29,7 +29,6 @@
         },
         "buttons": "\ue0e0 選擇 \ue0e1 退出"
     },
-    
     "inst": {
         "net": {
             "help": {
@@ -40,12 +39,15 @@
                 "title": "您想要通過哪種方式安裝",
                 "opt0": "URL",
                 "opt1": "谷歌網盤（Google Drive）",
-                "opt2": "Aliyun Drive"
+                "opt2": "Aliyun Drive",
+                "opt3": "WebDAV"
             },
             "url": {
                 "hint": "輸入文件的URL地址",
                 "invalid": "URL地址無效！",
-                "source_string": " 通過URL"
+                "source_string": " 通過URL",
+                "username": "用戶名",
+                "password": "密碼"
             },
             "gdrive": {
                 "hint": "請輸入一個谷歌網盤文件的ID",

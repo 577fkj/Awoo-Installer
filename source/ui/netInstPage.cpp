@@ -156,7 +156,7 @@ namespace inst::ui
 
     void netInstPage::startNetwork()
     {
-        std::vector<std::string> options = {"inst.net.src.opt0"_lang, "inst.net.src.opt2"_lang};
+        std::vector<std::string> options = {"inst.net.src.opt0"_lang, "inst.net.src.opt2"_lang, "inst.net.src.opt3"_lang};
         std::string url;
 
         while (true)
@@ -203,16 +203,53 @@ namespace inst::ui
                     break;
 
                 case 1:
+                    client = drive::new_drive(drive::dt_alidrive);
+                    try
+                    {
+                        if (client->qrLogin([&](const std::string &content, bool scaned)
+                                            {
+                            mainApp->CallForRender();
+                            drive::renderQr(content, this->qrcodeImage, 440);
+                            this->infoImage->SetVisible(false);
+                            this->qrcodeImage->SetVisible(true);
+                            this->pageInfoText->SetText(scaned ? "inst.net.qr_scaned"_lang : "inst.net.qr_new"_lang); }) == drive::ds_ok)
+                        {
+                            this->qrcodeImage->SetVisible(false);
+                            this->infoImage->SetVisible(true);
+                            this->ourUrls = client->list("root");
+                            this->lastFileId.push_back("root");
+                            break;
+                        };
+                    }
+                    catch (json::parse_error &ex)
+                    {
+                        inst::ui::mainApp->CreateShowDialog("json::parse_error", ex.what(), {"common.ok"_lang}, false);
+                    }
+                    catch (json::out_of_range &ex)
+                    {
+                        inst::ui::mainApp->CreateShowDialog("json::out_of_range", ex.what(), {"common.ok"_lang}, false);
+                    }
+                    catch (std::runtime_error &ex)
+                    {
+                        inst::ui::mainApp->CreateShowDialog("runtime_error", ex.what(), {"common.ok"_lang}, false);
+                    }
+                    catch (...)
+                    {
+                        inst::ui::mainApp->CreateShowDialog("inst.net.failed"_lang, "", {"common.ok"_lang}, false);
+                    }
+                    this->qrcodeImage->SetVisible(false);
+                    continue;
+                case 2:
                     client = drive::new_drive(drive::dt_webdav);
                     try
                     {
                         url = inst::util::softwareKeyboard("inst.net.url.hint"_lang, inst::config::lastNetUrl, 500);
                         if (url.empty())
                             continue;
-                        this->username = inst::util::softwareKeyboard("username", inst::config::lastUserName, 500);
+                        this->username = inst::util::softwareKeyboard("inst.net.url.username"_lang, inst::config::lastUserName, 500);
                         if (username.empty())
                             continue;
-                        this->password = inst::util::softwareKeyboard("password", inst::config::lastPassword, 500);
+                        this->password = inst::util::softwareKeyboard("inst.net.url.password"_lang, inst::config::lastPassword, 500);
                         if (password.empty())
                             continue;
 
@@ -234,44 +271,12 @@ namespace inst::ui
                             this->lastFileId.push_back(url);
                             break;
                         }
-
-                        // if (client->qrLogin([&](const std::string& content, bool scaned) {
-                        //     mainApp->CallForRender();
-                        //     drive::renderQr(content, this->qrcodeImage, 440);
-                        //     this->infoImage->SetVisible(false);
-                        //     this->qrcodeImage->SetVisible(true);
-                        //     this->pageInfoText->SetText(scaned ? "inst.net.qr_scaned"_lang : "inst.net.qr_new"_lang);
-                        // }) == drive::ds_ok) {
-                        //     this->qrcodeImage->SetVisible(false);
-                        //     this->infoImage->SetVisible(true);
-                        //     this->ourUrls = client->list("root");
-                        //     this->lastFileId.push_back("root");
-                        //     break;
-                        // };
-                    }
-                    catch (json::parse_error &ex)
-                    {
-                        inst::ui::mainApp->CreateShowDialog("json::parse_error", ex.what(), {"common.ok"_lang}, false);
-                    }
-                    catch (json::out_of_range &ex)
-                    {
-                        inst::ui::mainApp->CreateShowDialog("json::out_of_range", ex.what(), {"common.ok"_lang}, false);
-                    }
-                    catch (std::runtime_error &ex)
-                    {
-                        inst::ui::mainApp->CreateShowDialog("runtime_error", ex.what(), {"common.ok"_lang}, false);
-                    }
-                    catch (std::exception &ex)
-                    {
-                        inst::ui::mainApp->CreateShowDialog("std::exception", ex.what(), {"common.ok"_lang}, false);
                     }
                     catch (...)
                     {
                         inst::ui::mainApp->CreateShowDialog("inst.net.failed"_lang, "", {"common.ok"_lang}, false);
                     }
-                    // this->qrcodeImage->SetVisible(false);
                     break;
-
                 default:
                     continue;
                 }
@@ -283,6 +288,11 @@ namespace inst::ui
                     this->ourUrls.push_back({id : url, name : inst::util::formatUrlString(url)});
                 }
             }
+
+            config::lastNetUrl = url.back() != '/' ? url + '/' : url;
+            config::lastUserName = this->username;
+            config::lastPassword = this->password;
+            config::setConfig();
 
             mainApp->CallForRender(); // If we re-render a few times during this process the main screen won't flicker
             sourceString = "inst.net.source_string"_lang;

@@ -36,25 +36,23 @@ namespace tin::install::nsp
 {
     bool stopThreadsHttpNsp;
 
-    HTTPNSP::HTTPNSP(std::string url) :
-        m_download(url)
+    HTTPNSP::HTTPNSP(std::string url, std::string user_name, std::string password) : m_download(url, user_name, password)
     {
-
     }
 
     struct StreamFuncArgs
     {
-        tin::network::HTTPDownload* download;
-        tin::data::BufferedPlaceholderWriter* bufferedPlaceholderWriter;
+        tin::network::HTTPDownload *download;
+        tin::data::BufferedPlaceholderWriter *bufferedPlaceholderWriter;
         u64 pfs0Offset;
         u64 ncaSize;
     };
 
-    int CurlStreamFunc(void* in)
+    int CurlStreamFunc(void *in)
     {
-        StreamFuncArgs* args = reinterpret_cast<StreamFuncArgs*>(in);
+        StreamFuncArgs *args = reinterpret_cast<StreamFuncArgs *>(in);
 
-        auto streamFunc = [&](u8* streamBuf, size_t streamBufSize) -> size_t
+        auto streamFunc = [&](u8 *streamBuf, size_t streamBufSize) -> size_t
         {
             while (true)
             {
@@ -66,13 +64,14 @@ namespace tin::install::nsp
             return streamBufSize;
         };
 
-        if (args->download->StreamDataRange(args->pfs0Offset, args->ncaSize, streamFunc) == 1) stopThreadsHttpNsp = true;
+        if (args->download->StreamDataRange(args->pfs0Offset, args->ncaSize, streamFunc) == 1)
+            stopThreadsHttpNsp = true;
         return 0;
     }
 
-    int PlaceholderWriteFunc(void* in)
+    int PlaceholderWriteFunc(void *in)
     {
-        StreamFuncArgs* args = reinterpret_cast<StreamFuncArgs*>(in);
+        StreamFuncArgs *args = reinterpret_cast<StreamFuncArgs *>(in);
 
         while (!args->bufferedPlaceholderWriter->IsPlaceholderComplete() && !stopThreadsHttpNsp)
         {
@@ -83,9 +82,9 @@ namespace tin::install::nsp
         return 0;
     }
 
-    void HTTPNSP::StreamToPlaceholder(std::shared_ptr<nx::ncm::ContentStorage>& contentStorage, NcmContentId placeholderId)
+    void HTTPNSP::StreamToPlaceholder(std::shared_ptr<nx::ncm::ContentStorage> &contentStorage, NcmContentId placeholderId)
     {
-        const PFS0FileEntry* fileEntry = this->GetFileEntryByNcaId(placeholderId);
+        const PFS0FileEntry *fileEntry = this->GetFileEntryByNcaId(placeholderId);
         std::string ncaFileName = this->GetFileEntryName(fileEntry);
 
         LOG_DEBUG("Retrieving %s\n", ncaFileName.c_str());
@@ -119,14 +118,14 @@ namespace tin::install::nsp
                 size_t newSizeBuffered = bufferedPlaceholderWriter.GetSizeBuffered();
                 double mbBuffered = (newSizeBuffered / 1000000.0) - (startSizeBuffered / 1000000.0);
                 double duration = ((double)(newTime - startTime) / (double)freq);
-                speed =  mbBuffered / duration;
+                speed = mbBuffered / duration;
 
                 startTime = newTime;
                 startSizeBuffered = newSizeBuffered;
 
                 int downloadProgress = (int)(((double)bufferedPlaceholderWriter.GetSizeBuffered() / (double)bufferedPlaceholderWriter.GetTotalDataSize()) * 100.0);
 
-                inst::ui::instPage::setInstInfoText("inst.info_page.downloading"_lang + inst::util::formatUrlString(ncaFileName) + "inst.info_page.at"_lang + std::to_string(speed).substr(0, std::to_string(speed).size()-4) + "MB/s");
+                inst::ui::instPage::setInstInfoText("inst.info_page.downloading"_lang + inst::util::formatUrlString(ncaFileName) + "inst.info_page.at"_lang + std::to_string(speed).substr(0, std::to_string(speed).size() - 4) + "MB/s");
                 inst::ui::instPage::setInstBarPerc((double)downloadProgress);
             }
         }
@@ -144,10 +143,11 @@ namespace tin::install::nsp
 
         thrd_join(curlThread, NULL);
         thrd_join(writeThread, NULL);
-        if (stopThreadsHttpNsp) THROW_FORMAT(("inst.net.transfer_interput"_lang).c_str());
+        if (stopThreadsHttpNsp)
+            THROW_FORMAT(("inst.net.transfer_interput"_lang).c_str());
     }
 
-    void HTTPNSP::BufferData(void* buf, off_t offset, size_t size)
+    void HTTPNSP::BufferData(void *buf, off_t offset, size_t size)
     {
         m_download.BufferDataRange(buf, offset, size, nullptr);
     }

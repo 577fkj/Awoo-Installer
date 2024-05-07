@@ -1,5 +1,5 @@
 {
-    "main":{
+    "main": {
         "menu": {
             "sd": "Install from SD card",
             "net": "Install over LAN or internet",
@@ -39,12 +39,15 @@
                 "title": "Where do you want to install from?",
                 "opt0": "URL",
                 "opt1": "Google Drive",
-                "opt2": "AliyunDrive"
+                "opt2": "AliyunDrive",
+                "opt3": "WebDAV"
             },
             "url": {
                 "hint": "Enter the Internet address of a file",
                 "invalid": "The URL specified is invalid!",
-                "source_string": " from URL"
+                "source_string": " from URL",
+                "username": "Username",
+                "password": "Password"
             },
             "gdrive": {
                 "hint": "Enter the file ID of a public Google Drive file",

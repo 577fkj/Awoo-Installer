@@ -1,5 +1,5 @@
 {
-    "main":{
+    "main": {
         "menu": {
             "sd": "使用SD卡進行安裝",
             "net": "使用網路進行安裝",
@@ -28,7 +28,7 @@
             "desc": "在Applet模式下執行Awoo Installer可能會產生安裝錯誤。\n請在hbmenu模式(啟動任何一個遊戲時按住R)，再執行Awoo Installer！"
         },
         "buttons": "\ue0e0 選擇    \ue0e1 退出"
-    },   
+    },
     "inst": {
         "net": {
             "help": {
@@ -39,12 +39,15 @@
                 "title": "要從什麼路徑來源進行安裝？",
                 "opt0": "URL網路位址",
                 "opt1": "Google網路硬碟",
-                "opt2": "Aliyun Drive"
+                "opt2": "Aliyun Drive",
+                "opt3": "WebDAV"
             },
             "url": {
                 "hint": "請輸入檔案的URL網路位址",
                 "invalid": "URL網路位址無效！",
-                "source_string": "來源為URL"
+                "source_string": "來源為URL",
+                "username": "用戶名",
+                "password": "密碼"
             },
             "gdrive": {
                 "hint": "請輸入Google網路硬碟的共享檔案ID",
